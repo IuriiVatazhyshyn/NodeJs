@@ -1,25 +1,27 @@
+const mongoose = require("mongoose");
+
 const User = require("../models/User");
 const { sendErrorResponse } = require("../utils/utils");
-const errors = require("../constants/constants");
+const ERRORS = require("../constants/constants");
 
 class UserController {
   async create(req, res) {
     try {
       const { username } = req.body;
       if (!username || username.trim().length === 0) {
-        sendErrorResponse(res, 400, errors.USERNAME_IS_REQUIRED);
+        return sendErrorResponse(res, 400, ERRORS.USERNAME_IS_REQUIRED);
       }
 
       const duplicate = await User.findOne({ username }).exec();
       if (duplicate) {
-        sendErrorResponse(res, 409, errors.USERNAME_EXIST);
+        return sendErrorResponse(res, 409, ERRORS.USERNAME_EXIST);
       }
 
       const user = await User.create({ username });
 
       return res.status(200).json(user);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 
@@ -29,7 +31,7 @@ class UserController {
 
       return res.status(200).json(users);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 
@@ -37,14 +39,17 @@ class UserController {
     try {
       const { id } = req.params;
       if (!id) {
-        sendErrorResponse(res, 404, errors.USER_NOT_FOUND);
+        return sendErrorResponse(res, 404, ERRORS.USER_NOT_FOUND);
+      }
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return sendErrorResponse(res, 400, ERRORS.USER_ID_IS_WRONG);
       }
 
       const user = await User.findById(id);
 
       return res.status(200).json(user);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 
@@ -52,14 +57,14 @@ class UserController {
     try {
       const { user } = req.body;
       if (!user._id) {
-        sendErrorResponse(res, 404, errors.USER_NOT_FOUND);
+        return sendErrorResponse(res, 404, ERRORS.USER_NOT_FOUND);
       }
 
       const updatedUser = await User.findById(user._id, user, { new: true });
 
       return res.status(200).json(updatedUser);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 
@@ -67,14 +72,14 @@ class UserController {
     try {
       const { id } = req.params;
       if (!id) {
-        sendErrorResponse(res, 404, errors.USER_NOT_FOUND);
+        return sendErrorResponse(res, 404, ERRORS.USER_NOT_FOUND);
       }
 
       const user = await User.findByIdAndDelete(id);
 
       return res.status(200).json(user);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 }

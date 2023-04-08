@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { format } = require('date-fns');
 const { v4: uuid } = require('uuid');
 
@@ -13,23 +14,28 @@ class UserExerciseController {
       const { id } = req.params;
 
       if (!id) {
-        sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
+        return sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
+      }
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return sendErrorResponse(res, 400, ERRORS.USER_ID_IS_WRONG);
       }
 
-      const user = await User.findById(id);
+      const user = await User.findById(id).exec();
 
       if (!user) {
-        sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
+        return sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
       }
 
-      const { duration, description, date = `${format(new Date(), `yyy-MM-dd`)}` } = req.body;
+      const { duration, description, date } = req.body;
 
-      if (!duration || typeof duration !== 'number') {
-        sendErrorResponse(res, 400, ERRORS.DURATION_IS_REQUIRED);
-      } else if (!description || typeof description !== 'string') {
-        sendErrorResponse(res, 400, ERRORS.DESCRIPTION_IS_REQUIRED);
-      } else if (!validateDate(date)) {
-        sendErrorResponse(res, 400, ERRORS.WRONG_FORMAT);
+      if (!description || typeof description !== 'string') {
+        return sendErrorResponse(res, 400, ERRORS.DESCRIPTION_IS_REQUIRED);
+      }
+      if (!parseInt(duration)) {
+        return sendErrorResponse(res, 400, ERRORS.DURATION_IS_REQUIRED);
+      }
+      if (date && !validateDate(date)) {
+        return sendErrorResponse(res, 400, ERRORS.WRONG_FORMAT);
       }
 
       const response = await Exercise.create({
@@ -37,13 +43,13 @@ class UserExerciseController {
         exerciseId: uuid(),
         duration,
         description,
-        date,
+        date: date || `${format(new Date(), `yyyy-MM-dd`)}`,
         username: user.username
       });
 
       return res.status(200).json(response);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 
@@ -52,12 +58,16 @@ class UserExerciseController {
       const { id } = req.params;
 
       if (!id) {
-        sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
+        return sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
       }
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return sendErrorResponse(res, 400, ERRORS.USER_ID_IS_WRONG);
+      }
+
       const user = await User.findById(id);
 
       if (!user) {
-        sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
+        return sendErrorResponse(res, 400, ERRORS.USER_NOT_FOUND);
       }
 
       const exercises = await Exercise.find({ userId: id }) || [];
@@ -73,7 +83,7 @@ class UserExerciseController {
 
       return res.status(200).json(response);
     } catch (err) {
-      sendErrorResponse(res, 500, err.message);
+      return sendErrorResponse(res, 500, err.message);
     }
   }
 }

@@ -1,19 +1,23 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
 const cors = require('cors');
+const bodyParser = require('body-parser');
+
 const connectDB = require('./config/dbConfig');
 const credentials = require('./middleware/credentials');
 const corsOptions = require('./config/corsOptions');
+
 const PORT = process.env.PORT || 3000;
 
+const app = express();
 connectDB();
 
 app.use(credentials);
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/', require('./routes/router'));
 

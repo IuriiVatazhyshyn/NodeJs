@@ -1,3 +1,5 @@
+const { isValid, parse} = require('date-fns');
+
 const filterLogs = (logs, from, to, limit) => {
   if (logs.length === 0) return [];
 
@@ -30,8 +32,9 @@ const filterLogs = (logs, from, to, limit) => {
 const validateDate = (date) => {
   const regex = new RegExp('\\d{4}-\\d{2}-\\d{2}');
   const matched = regex.test(date);
+  const isDataValid = isValid(parse(date, 'yyyy-MM-dd', new Date()));
 
-  if (!matched) return false;
+  if (!matched || !isDataValid) return false;
 
   return date;
 };
