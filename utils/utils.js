@@ -1,6 +1,7 @@
 const { isValid, parse} = require('date-fns');
+const ERRORS = require("../constants/constants");
 
-const filterLogs = (logs, from, to, limit) => {
+const getFilteredLogs = (logs, from, to, limit) => {
   if (logs.length === 0) return [];
 
   const sortedLogs = logs.sort((prev, next) => prev.date < next.date ? -1 : 1);
@@ -8,6 +9,10 @@ const filterLogs = (logs, from, to, limit) => {
 
   const fromDate = validateDate(from);
   const toDate = validateDate(to);
+
+  if (from && !fromDate) return ERRORS.FROM_QUERY_PARAM_WRONG_FORMAT;
+  if (to && !toDate) return ERRORS.TO_QUERY_PARAM_WRONG_FORMAT;
+  if (limit && !Number(limit)) return ERRORS.LIMIT_QUERY_PARAM_WRONG_FORMAT;
 
   if (fromDate && toDate) {
     results = sortedLogs.filter(({ date }) =>
@@ -41,4 +46,4 @@ const validateDate = (date) => {
 
 const sendErrorResponse = (response, statusCode, message) => response.status(statusCode).json({ message });
 
-module.exports = { filterLogs, validateDate, sendErrorResponse };
+module.exports = { getFilteredLogs, validateDate, sendErrorResponse };
